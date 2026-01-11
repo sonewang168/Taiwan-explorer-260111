@@ -737,36 +737,15 @@ async function handleGoogleLink(userId, replyToken) {
         return;
     }
     
+    // 改用純文字訊息，避免 URL 太長的問題
     await replyMessage(replyToken, {
-        type: 'flex',
-        altText: '連動 Google 帳號',
-        contents: {
-            type: 'bubble',
-            body: {
-                type: 'box',
-                layout: 'vertical',
-                contents: [
-                    { type: 'text', text: '🔗 連動 Google 帳號', size: 'lg', weight: 'bold' },
-                    { type: 'separator', margin: 'lg' },
-                    { type: 'text', text: '連動後可以：', size: 'sm', margin: 'lg' },
-                    { type: 'text', text: '📷 照片自動存到 Google 相簿', size: 'sm', margin: 'sm', color: '#666' },
-                    { type: 'text', text: '📝 心得自動寫入 Google 文件', size: 'sm', margin: 'sm', color: '#666' },
-                    { type: 'text', text: '☁️ 永久保存你的探險紀錄', size: 'sm', margin: 'sm', color: '#666' }
-                ]
-            },
-            footer: {
-                type: 'box',
-                layout: 'vertical',
-                contents: [
-                    {
-                        type: 'button',
-                        action: { type: 'uri', label: '開始連動', uri: authUrl },
-                        style: 'primary',
-                        color: '#4285F4'
-                    }
-                ]
-            }
-        }
+        type: 'text',
+        text: '🔗 連動 Google 帳號\n\n' +
+              '連動後可以：\n' +
+              '📷 照片自動存到 Google 相簿\n' +
+              '📝 心得自動寫入 Google 文件\n\n' +
+              '👉 點擊下方連結開始連動：\n' +
+              authUrl
     });
 }
 
