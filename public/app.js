@@ -350,7 +350,9 @@ async function loadUserData() {
     if (!db || !app.user) return;
     
     try {
-        const doc = await db.collection('users').doc(app.user.uid).get();
+        const docRef = db.collection('users').doc(app.user.uid);
+        const doc = await docRef.get();
+        
         if (doc.exists) {
             const data = doc.data();
             app.collectedSpots = data.collectedSpots || [];
@@ -358,12 +360,45 @@ async function loadUserData() {
             app.spotNotes = data.spotNotes || {};
             app.logs = data.logs || [];
             app.unlockedAchievements = data.unlockedAchievements || [];
+            app.linkCode = data.linkCode;
+            
+            // 如果沒有 linkCode，產生一個
+            if (!app.linkCode) {
+                app.linkCode = generateLinkCode();
+                await docRef.update({ linkCode: app.linkCode });
+                console.log('已產生連動碼:', app.linkCode);
+            }
+        } else {
+            // 第一次登入，建立用戶資料
+            app.linkCode = generateLinkCode();
+            await docRef.set({
+                collectedSpots: [],
+                spotPhotos: {},
+                spotNotes: {},
+                logs: [],
+                unlockedAchievements: [],
+                linkCode: app.linkCode,
+                displayName: app.user.displayName || app.user.email.split('@')[0],
+                email: app.user.email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log('已建立用戶資料，連動碼:', app.linkCode);
         }
         updateAll();
     } catch (error) {
         console.error('載入資料失敗:', error);
         loadLocalData();
     }
+}
+
+// 產生連動碼
+function generateLinkCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
 }
 
 // 從本地儲存載入資料
@@ -1081,19 +1116,15 @@ function showUserMenu() {
 // ==================== LINE 連動 ====================
 
 function showLineConnectModal() {
-    // 生成連動碼
-    const code = app.user ? app.user.uid.substring(0, 8).toUpperCase() : generateLinkCode();
+    // 使用 Firestore 儲存的連動碼
+    const code = app.linkCode || '請先登入';
     document.getElementById('link-code').value = code;
     
-    // QR Code（實際部署時替換為真實的 LINE Bot 連結）
-    const lineUrl = `https://line.me/R/ti/p/@your-bot-id`;
+    // QR Code - 替換為你的 LINE Bot ID
+    const lineUrl = `https://line.me/R/ti/p/@870ehwpy`;
     document.getElementById('line-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(lineUrl)}`;
     
     showModal('line-modal');
-}
-
-function generateLinkCode() {
-    return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
 // ==================== 通用功能 ====================
