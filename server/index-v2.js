@@ -163,6 +163,7 @@ app.get('/google-link', (req, res) => {
                     justify-content: center;
                     margin: 0;
                     color: #fff;
+                    padding: 1rem;
                 }
                 .card {
                     background: rgba(255,255,255,0.1);
@@ -170,9 +171,10 @@ app.get('/google-link', (req, res) => {
                     border-radius: 20px;
                     text-align: center;
                     max-width: 350px;
+                    width: 100%;
                 }
                 h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-                p { color: #aaa; margin-bottom: 1.5rem; }
+                p { color: #aaa; margin-bottom: 1rem; line-height: 1.6; }
                 .btn {
                     display: inline-block;
                     background: #4285F4;
@@ -181,22 +183,90 @@ app.get('/google-link', (req, res) => {
                     border-radius: 50px;
                     text-decoration: none;
                     font-weight: bold;
-                    font-size: 1.1rem;
+                    font-size: 1rem;
+                    margin-top: 1rem;
                 }
-                .btn:hover { background: #3367D6; }
+                .warning {
+                    background: rgba(255, 193, 7, 0.2);
+                    border: 1px solid #ffc107;
+                    border-radius: 10px;
+                    padding: 1rem;
+                    margin: 1rem 0;
+                    color: #ffc107;
+                }
+                .copy-box {
+                    background: rgba(0,0,0,0.3);
+                    padding: 0.75rem;
+                    border-radius: 8px;
+                    word-break: break-all;
+                    font-size: 0.8rem;
+                    margin: 1rem 0;
+                    color: #00f5ff;
+                }
+                .copy-btn {
+                    background: #00f5ff;
+                    color: #000;
+                    border: none;
+                    padding: 0.5rem 1.5rem;
+                    border-radius: 20px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    margin-top: 0.5rem;
+                }
+                .steps { text-align: left; color: #ccc; font-size: 0.9rem; }
+                .steps li { margin: 0.5rem 0; }
+                .hidden { display: none; }
             </style>
         </head>
         <body>
             <div class="card">
                 <h1>🔗 連動 Google 帳號</h1>
-                <p>點擊下方按鈕授權存取<br>Google 相簿和文件</p>
-                <a href="${authUrl}" class="btn">開始連動</a>
+                
+                <!-- LINE 內瀏覽器提示 -->
+                <div id="lineWarning" class="hidden">
+                    <div class="warning">
+                        ⚠️ 請用外部瀏覽器開啟
+                    </div>
+                    <p>Google 不支援在 LINE 內登入，請：</p>
+                    <ol class="steps">
+                        <li>點擊下方「複製連結」</li>
+                        <li>開啟 Safari 或 Chrome</li>
+                        <li>貼上連結並前往</li>
+                    </ol>
+                    <div class="copy-box" id="copyUrl">${config.webUrl}/google-link?user=${userId}</div>
+                    <button class="copy-btn" onclick="copyLink()">📋 複製連結</button>
+                </div>
+                
+                <!-- 正常瀏覽器顯示 -->
+                <div id="normalView" class="hidden">
+                    <p>連動後可以：<br>
+                    📷 照片自動存到 Google 相簿<br>
+                    📝 心得自動寫入 Google 文件</p>
+                    <a href="${authUrl}" class="btn">開始連動</a>
+                </div>
             </div>
+            
+            <script>
+                // 偵測是否在 LINE 內建瀏覽器
+                const isLine = /Line/i.test(navigator.userAgent);
+                
+                if (isLine) {
+                    document.getElementById('lineWarning').classList.remove('hidden');
+                } else {
+                    document.getElementById('normalView').classList.remove('hidden');
+                }
+                
+                function copyLink() {
+                    const url = document.getElementById('copyUrl').innerText;
+                    navigator.clipboard.writeText(url).then(() => {
+                        alert('✅ 已複製！請開啟 Safari 或 Chrome 貼上');
+                    });
+                }
+            </script>
         </body>
         </html>
     `);
 });
-
 // Google OAuth 回調
 app.get('/auth/google/callback', async (req, res) => {
     const { code, state: lineUserId } = req.query;
