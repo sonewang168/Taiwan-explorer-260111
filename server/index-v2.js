@@ -920,6 +920,9 @@ async function handleAlbumQuery(userId, replyToken) {
         const tokens = await googleApi.refreshTokens(userData.googleTokens.refresh_token);
         const albumUrl = await googleApi.getAlbumUrl(tokens, userData.googleAlbumId);
         
+        // 確保 albumUrl 有值
+        const finalUrl = albumUrl || `https://photos.google.com/album/${userData.googleAlbumId}`;
+        
         await replyMessage(replyToken, {
             type: 'flex',
             altText: '我的探險相簿',
@@ -930,7 +933,7 @@ async function handleAlbumQuery(userId, replyToken) {
                     layout: 'vertical',
                     contents: [
                         { type: 'text', text: '📷 我的探險相簿', size: 'lg', weight: 'bold' },
-                        { type: 'text', text: '所有打卡照片都在這裡！', size: 'sm', color: '#666', margin: 'md' }
+                        { type: 'text', text: '所有打卡照片都在這裡！', size: 'sm', color: '#666666', margin: 'md' }
                     ]
                 },
                 footer: {
@@ -939,7 +942,7 @@ async function handleAlbumQuery(userId, replyToken) {
                     contents: [
                         {
                             type: 'button',
-                            action: { type: 'uri', label: '開啟相簿', uri: albumUrl },
+                            action: { type: 'uri', label: '開啟相簿', uri: finalUrl },
                             style: 'primary',
                             color: '#27ae60'
                         }
@@ -949,7 +952,7 @@ async function handleAlbumQuery(userId, replyToken) {
         });
     } catch (error) {
         console.error('取得相簿失敗:', error);
-        await replyMessage(replyToken, { type: 'text', text: '❌ 取得相簿失敗' });
+        await replyMessage(replyToken, { type: 'text', text: '❌ 取得相簿失敗，請稍後再試' });
     }
 }
 
@@ -964,7 +967,8 @@ async function handleDocQuery(userId, replyToken) {
         return;
     }
     
-    const docUrl = googleApi.getDocUrl(userData.googleDocId);
+    // 確保 docUrl 有值
+    const docUrl = googleApi.getDocUrl(userData.googleDocId) || `https://docs.google.com/document/d/${userData.googleDocId}/edit`;
     
     await replyMessage(replyToken, {
         type: 'flex',
@@ -976,7 +980,7 @@ async function handleDocQuery(userId, replyToken) {
                 layout: 'vertical',
                 contents: [
                     { type: 'text', text: '📝 我的旅行紀錄', size: 'lg', weight: 'bold' },
-                    { type: 'text', text: '圖文並茂的探險日誌', size: 'sm', color: '#666', margin: 'md' }
+                    { type: 'text', text: '圖文並茂的探險日誌', size: 'sm', color: '#666666', margin: 'md' }
                 ]
             },
             footer: {
