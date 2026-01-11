@@ -794,31 +794,34 @@ async function completeCheckin(userId, replyToken) {
     };
     
     // 如果有 Google 整合，加上連結
-    if (albumUrl || docUrl) {
+    const footerButtons = [];
+    
+    if (albumUrl) {
+        footerButtons.push({
+            type: 'button',
+            action: { type: 'uri', label: '📷 查看相簿', uri: albumUrl },
+            style: 'secondary',
+            height: 'sm'
+        });
+    }
+    
+    if (docUrl) {
+        footerButtons.push({
+            type: 'button',
+            action: { type: 'uri', label: '📝 查看文件', uri: docUrl },
+            style: 'secondary',
+            height: 'sm',
+            margin: albumUrl ? 'sm' : 'none'
+        });
+    }
+    
+    // 只有真的有按鈕時才加 footer
+    if (footerButtons.length > 0) {
         contents.footer = {
             type: 'box',
             layout: 'vertical',
-            contents: []
+            contents: footerButtons
         };
-        
-        if (albumUrl) {
-            contents.footer.contents.push({
-                type: 'button',
-                action: { type: 'uri', label: '📷 查看相簿', uri: albumUrl },
-                style: 'secondary',
-                height: 'sm'
-            });
-        }
-        
-        if (docUrl) {
-            contents.footer.contents.push({
-                type: 'button',
-                action: { type: 'uri', label: '📝 查看文件', uri: docUrl },
-                style: 'secondary',
-                height: 'sm',
-                margin: 'sm'
-            });
-        }
     }
     
     await replyMessage(replyToken, {
@@ -1025,74 +1028,24 @@ async function handleProgressQuery(userId, replyToken) {
     let userData = await getUserData(userId);
     
     if (!userData) {
-        await replyMessage(replyToken, {
-            type: 'text',
-            text: '⚠️ 你還沒有連動帳號\n\n請先在網頁版登入，然後輸入「連動 [連動碼]」'
-        });
-        return;
+        userData = { collectedSpots: [] };
     }
     
     const total = Object.values(spotsData).reduce((sum, c) => sum + c.spots.length, 0);
     const collected = userData.collectedSpots?.length || 0;
     const percentage = Math.round((collected / total) * 100);
     
+    // 用文字產生進度條
+    const barLength = 10;
+    const filled = Math.round(barLength * percentage / 100);
+    const progressBar = '🟨'.repeat(filled) + '⬜'.repeat(barLength - filled);
+    
     await replyMessage(replyToken, {
-        type: 'flex',
-        altText: `收集進度：${collected}/${total}`,
-        contents: {
-            type: 'bubble',
-            body: {
-                type: 'box',
-                layout: 'vertical',
-                contents: [
-                    { type: 'text', text: '🗺️ 我的探險進度', size: 'lg', weight: 'bold' },
-                    {
-                        type: 'box',
-                        layout: 'horizontal',
-                        contents: [
-                            {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [
-                                    { type: 'text', text: `${collected}`, size: 'xxl', weight: 'bold', color: '#f4d03f', align: 'center' },
-                                    { type: 'text', text: '已收集', size: 'xs', color: '#666', align: 'center' }
-                                ],
-                                flex: 1
-                            },
-                            {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [
-                                    { type: 'text', text: `${total}`, size: 'xxl', weight: 'bold', align: 'center' },
-                                    { type: 'text', text: '總景點', size: 'xs', color: '#666', align: 'center' }
-                                ],
-                                flex: 1
-                            }
-                        ],
-                        margin: 'xl'
-                    },
-                    {
-                        type: 'box',
-                        layout: 'vertical',
-                        contents: [
-                            {
-                                type: 'box',
-                                layout: 'vertical',
-                                contents: [],
-                                backgroundColor: '#f4d03f',
-                                height: '8px',
-                                width: `${percentage}%`
-                            }
-                        ],
-                        backgroundColor: '#eeeeee',
-                        height: '8px',
-                        margin: 'xl',
-                        cornerRadius: '4px'
-                    },
-                    { type: 'text', text: `完成度 ${percentage}%`, size: 'sm', color: '#666', align: 'center', margin: 'md' }
-                ]
-            }
-        }
+        type: 'text',
+        text: `🗺️ 我的探險進度\n\n` +
+              `📍 已收集：${collected} / ${total}\n\n` +
+              `${progressBar}\n\n` +
+              `✨ 完成度：${percentage}%`
     });
 }
 
