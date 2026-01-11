@@ -4,12 +4,13 @@
 
 // Firebase 配置（部署時替換）
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCqcqt2tmTwbrdj75Vg6shm9Hubm96CVBg",
+  authDomain: "taiwan-explorer-260111.firebaseapp.com",
+  projectId: "taiwan-explorer-260111",
+  storageBucket: "taiwan-explorer-260111.firebasestorage.app",
+  messagingSenderId: "1069181589418",
+  appId: "1:1069181589418:web:3cfc13fee8a85175047dd3",
+  measurementId: "G-RKQ4RJNLJ5"
 };
 
 // 景點資料（完整版）
