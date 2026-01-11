@@ -110,163 +110,74 @@ function getDistance(lat1, lon1, lat2, lon2) {
 }
 
 async function getUserData(lineUserId) {
-    if (!db) return memoryStore.users[lineUserId] || null;
+    // 先從記憶體讀取
+    let userData = memoryStore.users[lineUserId] || {};
     
-    const linkDoc = await db.collection('lineLinks').doc(lineUserId).get();
-    if (!linkDoc.exists) return null;
+    if (!db) return Object.keys(userData).length > 0 ? userData : null;
     
-    const firebaseUserId = linkDoc.data().firebaseUserId;
-    const userDoc = await db.collection('users').doc(firebaseUserId).get();
+    // 從 lineUsers 讀取 Google 連動資料
+    try {
+        const lineUserDoc = await db.collection('lineUsers').doc(lineUserId).get();
+        if (lineUserDoc.exists) {
+            userData = { ...userData, ...lineUserDoc.data() };
+            // 同步到記憶體
+            memoryStore.users[lineUserId] = userData;
+        }
+    } catch (e) {
+        console.log('讀取 lineUsers 失敗:', e.message);
+    }
     
-    return userDoc.exists ? { id: firebaseUserId, ...userDoc.data() } : null;
+    // 也嘗試從 lineLinks 讀取（相容舊資料）
+    try {
+        const linkDoc = await db.collection('lineLinks').doc(lineUserId).get();
+        if (linkDoc.exists) {
+            const firebaseUserId = linkDoc.data().firebaseUserId;
+            const userDoc = await db.collection('users').doc(firebaseUserId).get();
+            if (userDoc.exists) {
+                userData = { ...userData, id: firebaseUserId, ...userDoc.data() };
+            }
+        }
+    } catch (e) {
+        console.log('讀取 lineLinks 失敗:', e.message);
+    }
+    
+    return Object.keys(userData).length > 0 ? userData : null;
 }
 
 async function updateUserData(lineUserId, updates) {
-    if (!db) {
-        memoryStore.users[lineUserId] = { ...memoryStore.users[lineUserId], ...updates };
-        return;
+    // 更新記憶體
+    memoryStore.users[lineUserId] = { ...memoryStore.users[lineUserId], ...updates };
+    
+    if (!db) return;
+    
+    // 更新 lineUsers
+    try {
+        await db.collection('lineUsers').doc(lineUserId).set({
+            ...updates,
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+    } catch (e) {
+        console.log('更新 lineUsers 失敗:', e.message);
     }
     
-    const linkDoc = await db.collection('lineLinks').doc(lineUserId).get();
-    if (!linkDoc.exists) return;
-    
-    const firebaseUserId = linkDoc.data().firebaseUserId;
-    await db.collection('users').doc(firebaseUserId).update(updates);
+    // 也更新 users（相容舊資料）
+    try {
+        const linkDoc = await db.collection('lineLinks').doc(lineUserId).get();
+        if (linkDoc.exists) {
+            const firebaseUserId = linkDoc.data().firebaseUserId;
+            await db.collection('users').doc(firebaseUserId).update(updates);
+        }
+    } catch (e) {
+        // 忽略
+    }
 }
 
 // ==================== API 路由 ====================
 
-// Google 連動中介頁面
-app.get('/google-link', (req, res) => {
-    const userId = req.query.user;
-    const authUrl = googleApi.getAuthUrl(userId);
-    
-    if (!authUrl) {
-        res.send('Google 連動功能尚未設定');
-        return;
-    }
-    
-    res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>連動 Google 帳號</title>
-            <style>
-                body {
-                    font-family: -apple-system, sans-serif;
-                    background: linear-gradient(135deg, #1a1a2e, #16213e);
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin: 0;
-                    color: #fff;
-                    padding: 1rem;
-                }
-                .card {
-                    background: rgba(255,255,255,0.1);
-                    padding: 2rem;
-                    border-radius: 20px;
-                    text-align: center;
-                    max-width: 350px;
-                    width: 100%;
-                }
-                h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-                p { color: #aaa; margin-bottom: 1rem; line-height: 1.6; }
-                .btn {
-                    display: inline-block;
-                    background: #4285F4;
-                    color: #fff;
-                    padding: 1rem 2rem;
-                    border-radius: 50px;
-                    text-decoration: none;
-                    font-weight: bold;
-                    font-size: 1rem;
-                    margin-top: 1rem;
-                }
-                .warning {
-                    background: rgba(255, 193, 7, 0.2);
-                    border: 1px solid #ffc107;
-                    border-radius: 10px;
-                    padding: 1rem;
-                    margin: 1rem 0;
-                    color: #ffc107;
-                }
-                .copy-box {
-                    background: rgba(0,0,0,0.3);
-                    padding: 0.75rem;
-                    border-radius: 8px;
-                    word-break: break-all;
-                    font-size: 0.8rem;
-                    margin: 1rem 0;
-                    color: #00f5ff;
-                }
-                .copy-btn {
-                    background: #00f5ff;
-                    color: #000;
-                    border: none;
-                    padding: 0.5rem 1.5rem;
-                    border-radius: 20px;
-                    font-weight: bold;
-                    cursor: pointer;
-                    margin-top: 0.5rem;
-                }
-                .steps { text-align: left; color: #ccc; font-size: 0.9rem; }
-                .steps li { margin: 0.5rem 0; }
-                .hidden { display: none; }
-            </style>
-        </head>
-        <body>
-            <div class="card">
-                <h1>🔗 連動 Google 帳號</h1>
-                
-                <!-- LINE 內瀏覽器提示 -->
-                <div id="lineWarning" class="hidden">
-                    <div class="warning">
-                        ⚠️ 請用外部瀏覽器開啟
-                    </div>
-                    <p>Google 不支援在 LINE 內登入，請：</p>
-                    <ol class="steps">
-                        <li>點擊下方「複製連結」</li>
-                        <li>開啟 Safari 或 Chrome</li>
-                        <li>貼上連結並前往</li>
-                    </ol>
-                    <div class="copy-box" id="copyUrl">${config.webUrl}/google-link?user=${userId}</div>
-                    <button class="copy-btn" onclick="copyLink()">📋 複製連結</button>
-                </div>
-                
-                <!-- 正常瀏覽器顯示 -->
-                <div id="normalView" class="hidden">
-                    <p>連動後可以：<br>
-                    📷 照片自動存到 Google 相簿<br>
-                    📝 心得自動寫入 Google 文件</p>
-                    <a href="${authUrl}" class="btn">開始連動</a>
-                </div>
-            </div>
-            
-            <script>
-                // 偵測是否在 LINE 內建瀏覽器
-                const isLine = /Line/i.test(navigator.userAgent);
-                
-                if (isLine) {
-                    document.getElementById('lineWarning').classList.remove('hidden');
-                } else {
-                    document.getElementById('normalView').classList.remove('hidden');
-                }
-                
-                function copyLink() {
-                    const url = document.getElementById('copyUrl').innerText;
-                    navigator.clipboard.writeText(url).then(() => {
-                        alert('✅ 已複製！請開啟 Safari 或 Chrome 貼上');
-                    });
-                }
-            </script>
-        </body>
-        </html>
-    `);
+app.get('/api/spots', (req, res) => {
+    res.json(spotsData);
 });
+
 // Google OAuth 回調
 app.get('/auth/google/callback', async (req, res) => {
     const { code, state: lineUserId } = req.query;
@@ -274,30 +185,28 @@ app.get('/auth/google/callback', async (req, res) => {
     try {
         const tokens = await googleApi.getTokensFromCode(code);
         
-        // 儲存 tokens
-        if (db && lineUserId) {
-            const linkDoc = await db.collection('lineLinks').doc(lineUserId).get();
-            if (linkDoc.exists) {
-                const firebaseUserId = linkDoc.data().firebaseUserId;
-                await db.collection('users').doc(firebaseUserId).update({
-                    googleTokens: tokens
-                });
-            }
+        // 儲存 tokens 到記憶體（立即可用）
+        if (!memoryStore.users[lineUserId]) {
+            memoryStore.users[lineUserId] = {};
         }
+        memoryStore.users[lineUserId].googleTokens = tokens;
         
         // 建立相簿和文件
         const albumId = await googleApi.getOrCreateAlbum(tokens);
         const docId = await googleApi.getOrCreateDoc(tokens);
         
+        // 保存到記憶體
+        memoryStore.users[lineUserId].googleAlbumId = albumId;
+        memoryStore.users[lineUserId].googleDocId = docId;
+        
+        // 儲存到 Firebase（永久保存）
         if (db && lineUserId) {
-            const linkDoc = await db.collection('lineLinks').doc(lineUserId).get();
-            if (linkDoc.exists) {
-                const firebaseUserId = linkDoc.data().firebaseUserId;
-                await db.collection('users').doc(firebaseUserId).update({
-                    googleAlbumId: albumId,
-                    googleDocId: docId
-                });
-            }
+            await db.collection('lineUsers').doc(lineUserId).set({
+                googleTokens: tokens,
+                googleAlbumId: albumId,
+                googleDocId: docId,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
         }
         
         // 通知 LINE
@@ -854,7 +763,9 @@ async function handleLinkCommand(userId, code, replyToken) {
 }
 
 async function handleGoogleLink(userId, replyToken) {
-    if (!config.google.clientId) {
+    const authUrl = googleApi.getAuthUrl(userId);
+    
+    if (!authUrl) {
         await replyMessage(replyToken, {
             type: 'text',
             text: '❌ Google 連動功能尚未設定'
@@ -862,17 +773,36 @@ async function handleGoogleLink(userId, replyToken) {
         return;
     }
     
-    // 用短連結指向中介頁面
-    const linkUrl = `${config.webUrl}/google-link?user=${userId}`;
-    
     await replyMessage(replyToken, {
-        type: 'text',
-        text: '🔗 連動 Google 帳號\n\n' +
-              '連動後可以：\n' +
-              '📷 照片自動存到 Google 相簿\n' +
-              '📝 心得自動寫入 Google 文件\n\n' +
-              '👉 點擊連結開始：\n' +
-              linkUrl
+        type: 'flex',
+        altText: '連動 Google 帳號',
+        contents: {
+            type: 'bubble',
+            body: {
+                type: 'box',
+                layout: 'vertical',
+                contents: [
+                    { type: 'text', text: '🔗 連動 Google 帳號', size: 'lg', weight: 'bold' },
+                    { type: 'separator', margin: 'lg' },
+                    { type: 'text', text: '連動後可以：', size: 'sm', margin: 'lg' },
+                    { type: 'text', text: '📷 照片自動存到 Google 相簿', size: 'sm', margin: 'sm', color: '#666' },
+                    { type: 'text', text: '📝 心得自動寫入 Google 文件', size: 'sm', margin: 'sm', color: '#666' },
+                    { type: 'text', text: '☁️ 永久保存你的探險紀錄', size: 'sm', margin: 'sm', color: '#666' }
+                ]
+            },
+            footer: {
+                type: 'box',
+                layout: 'vertical',
+                contents: [
+                    {
+                        type: 'button',
+                        action: { type: 'uri', label: '開始連動', uri: authUrl },
+                        style: 'primary',
+                        color: '#4285F4'
+                    }
+                ]
+            }
+        }
     });
 }
 
