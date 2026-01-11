@@ -1086,7 +1086,7 @@ function showLineConnectModal() {
     document.getElementById('link-code').value = code;
     
     // QR Code（實際部署時替換為真實的 LINE Bot 連結）
-    const lineUrl = `https://line.me/R/ti/p/@your-bot-id`;
+    const lineUrl = `https://line.me/R/ti/p/@848mlviu`;
     document.getElementById('line-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(lineUrl)}`;
     
     showModal('line-modal');
