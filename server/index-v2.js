@@ -235,6 +235,125 @@ app.get('/auth/google/callback', async (req, res) => {
     }
 });
 
+// Google 連動中介頁面（避免 LINE 內建瀏覽器問題）
+app.get('/google-link', (req, res) => {
+    const userId = req.query.user;
+    
+    if (!userId) {
+        res.status(400).send('缺少用戶資訊');
+        return;
+    }
+    
+    const authUrl = googleApi.getAuthUrl(userId);
+    
+    if (!authUrl) {
+        res.send('Google 連動功能尚未設定');
+        return;
+    }
+    
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>連動 Google 帳號</title>
+            <style>
+                body {
+                    font-family: -apple-system, sans-serif;
+                    background: linear-gradient(135deg, #1a1a2e, #16213e);
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0;
+                    color: #fff;
+                    padding: 1rem;
+                }
+                .card {
+                    background: rgba(255,255,255,0.1);
+                    padding: 2rem;
+                    border-radius: 20px;
+                    text-align: center;
+                    max-width: 350px;
+                    width: 100%;
+                }
+                h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+                p { color: #aaa; margin-bottom: 1rem; line-height: 1.6; }
+                .btn {
+                    display: inline-block;
+                    background: #4285F4;
+                    color: #fff;
+                    padding: 1rem 2rem;
+                    border-radius: 50px;
+                    text-decoration: none;
+                    font-weight: bold;
+                    font-size: 1rem;
+                    margin-top: 1rem;
+                }
+                .btn:hover { background: #3367D6; }
+                .warning {
+                    background: rgba(255, 193, 7, 0.2);
+                    border: 1px solid #ffc107;
+                    border-radius: 10px;
+                    padding: 1rem;
+                    margin: 1rem 0;
+                    color: #ffc107;
+                    font-size: 0.9rem;
+                }
+                .copy-btn {
+                    background: #00f5ff;
+                    color: #000;
+                    border: none;
+                    padding: 0.5rem 1.5rem;
+                    border-radius: 20px;
+                    font-weight: bold;
+                    cursor: pointer;
+                }
+                .hidden { display: none; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h1>🔗 連動 Google 帳號</h1>
+                
+                <div id="lineWarning" class="hidden">
+                    <div class="warning">
+                        ⚠️ 請用外部瀏覽器開啟<br>
+                        <small>Google 不支援在 LINE 內登入</small>
+                    </div>
+                    <p>請複製此頁網址，用 Safari 或 Chrome 開啟</p>
+                    <button class="copy-btn" onclick="copyUrl()">📋 複製網址</button>
+                </div>
+                
+                <div id="normalView" class="hidden">
+                    <p>連動後可以：<br>
+                    📷 照片自動存到 Google 相簿<br>
+                    📝 心得自動寫入 Google 文件</p>
+                    <a href="${authUrl}" class="btn">開始連動</a>
+                </div>
+            </div>
+            
+            <script>
+                const isLine = /Line/i.test(navigator.userAgent);
+                
+                if (isLine) {
+                    document.getElementById('lineWarning').classList.remove('hidden');
+                } else {
+                    document.getElementById('normalView').classList.remove('hidden');
+                }
+                
+                function copyUrl() {
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                        alert('✅ 已複製！請用 Safari 或 Chrome 開啟');
+                    });
+                }
+            </script>
+        </body>
+        </html>
+    `);
+});
+
 // ==================== LINE Webhook ====================
 
 app.post('/webhook', async (req, res) => {
@@ -763,9 +882,7 @@ async function handleLinkCommand(userId, code, replyToken) {
 }
 
 async function handleGoogleLink(userId, replyToken) {
-    const authUrl = googleApi.getAuthUrl(userId);
-    
-    if (!authUrl) {
+    if (!config.google.clientId) {
         await replyMessage(replyToken, {
             type: 'text',
             text: '❌ Google 連動功能尚未設定'
@@ -773,36 +890,18 @@ async function handleGoogleLink(userId, replyToken) {
         return;
     }
     
+    // 使用中介頁面的短連結
+    const linkUrl = `${config.webUrl}/google-link?user=${userId}`;
+    
     await replyMessage(replyToken, {
-        type: 'flex',
-        altText: '連動 Google 帳號',
-        contents: {
-            type: 'bubble',
-            body: {
-                type: 'box',
-                layout: 'vertical',
-                contents: [
-                    { type: 'text', text: '🔗 連動 Google 帳號', size: 'lg', weight: 'bold' },
-                    { type: 'separator', margin: 'lg' },
-                    { type: 'text', text: '連動後可以：', size: 'sm', margin: 'lg' },
-                    { type: 'text', text: '📷 照片自動存到 Google 相簿', size: 'sm', margin: 'sm', color: '#666' },
-                    { type: 'text', text: '📝 心得自動寫入 Google 文件', size: 'sm', margin: 'sm', color: '#666' },
-                    { type: 'text', text: '☁️ 永久保存你的探險紀錄', size: 'sm', margin: 'sm', color: '#666' }
-                ]
-            },
-            footer: {
-                type: 'box',
-                layout: 'vertical',
-                contents: [
-                    {
-                        type: 'button',
-                        action: { type: 'uri', label: '開始連動', uri: authUrl },
-                        style: 'primary',
-                        color: '#4285F4'
-                    }
-                ]
-            }
-        }
+        type: 'text',
+        text: '🔗 連動 Google 帳號\n\n' +
+              '連動後可以：\n' +
+              '📷 照片自動存到 Google 相簿\n' +
+              '📝 心得自動寫入 Google 文件\n' +
+              '☁️ 永久保存探險紀錄\n\n' +
+              '👉 點擊連結開始連動：\n' +
+              linkUrl
     });
 }
 
