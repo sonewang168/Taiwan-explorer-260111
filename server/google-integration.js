@@ -146,33 +146,34 @@ class GoogleIntegration {
     // ==================== Google Docs ====================
 
     // 建立或取得文件
-    async getOrCreateDoc(tokens, docTitle = '🗺️ 台灣探險圖鑑 - 旅行紀錄') {
-        this.setCredentials(tokens);
-        
-        const drive = google.drive({ version: 'v3', auth: this.oauth2Client });
-        const docs = google.docs({ version: 'v1', auth: this.oauth2Client });
-        
-        // 搜尋現有文件
-        const searchResponse = await drive.files.list({
-            q: `name='${docTitle}' and mimeType='application/vnd.google-apps.document' and trashed=false`,
-            fields: 'files(id, name)',
-            spaces: 'drive'
-        });
-        
-        if (searchResponse.data.files && searchResponse.data.files.length > 0) {
-            return searchResponse.data.files[0].id;
+async getOrCreateDoc(tokens, docTitle = '🗺️ 台灣探險圖鑑 - 旅行紀錄') {
+    this.setCredentials(tokens);
+    
+    const drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+    const docs = google.docs({ version: 'v1', auth: this.oauth2Client });
+    
+    // 搜尋現有文件
+    const searchResponse = await drive.files.list({
+        q: `name='${docTitle}' and mimeType='application/vnd.google-apps.document' and trashed=false`,
+        fields: 'files(id, name)',
+        spaces: 'drive'
+    });
+    
+    if (searchResponse.data.files && searchResponse.data.files.length > 0) {
+        return searchResponse.data.files[0].id;
+    }
+    
+    // 建立新文件
+    const createResponse = await docs.documents.create({
+        requestBody: {
+            title: docTitle
         }
-        
-        // 建立新文件
-        const createResponse = await docs.documents.create({
-            requestBody: {
-                title: docTitle
-            }
-        });
-        
-        const docId = createResponse.data.documentId;
-        
-        // 初始化文件內容
+    });
+    
+    const docId = createResponse.data.documentId;
+    
+    // 簡化：只插入標題文字，不做格式化
+    try {
         await docs.documents.batchUpdate({
             documentId: docId,
             requestBody: {
@@ -180,32 +181,18 @@ class GoogleIntegration {
                     {
                         insertText: {
                             location: { index: 1 },
-                            text: '🗺️ 台灣探險圖鑑 - 旅行紀錄\n\n'
-                        }
-                    },
-                    {
-                        updateParagraphStyle: {
-                            range: { startIndex: 1, endIndex: 25 },
-                            paragraphStyle: {
-                                namedStyleType: 'HEADING_1',
-                                alignment: 'CENTER'
-                            },
-                            fields: 'namedStyleType,alignment'
-                        }
-                    },
-                    {
-                        insertText: {
-                            location: { index: 27 },
-                            text: '記錄每一個探險的足跡與回憶 ✨\n\n' +
-                                  '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'
+                            text: '台灣探險圖鑑 - 旅行紀錄\n\n記錄每一個探險的足跡與回憶\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'
                         }
                     }
                 ]
             }
         });
-        
-        return docId;
+    } catch (e) {
+        console.log('文件初始化跳過:', e.message);
     }
+    
+    return docId;
+}
 
     // 新增打卡紀錄到文件
     async appendCheckinToDoc(tokens, docId, checkinData) {
