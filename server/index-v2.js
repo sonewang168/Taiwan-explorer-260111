@@ -136,8 +136,65 @@ async function updateUserData(lineUserId, updates) {
 
 // ==================== API 路由 ====================
 
-app.get('/api/spots', (req, res) => {
-    res.json(spotsData);
+// Google 連動中介頁面
+app.get('/google-link', (req, res) => {
+    const userId = req.query.user;
+    const authUrl = googleApi.getAuthUrl(userId);
+    
+    if (!authUrl) {
+        res.send('Google 連動功能尚未設定');
+        return;
+    }
+    
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>連動 Google 帳號</title>
+            <style>
+                body {
+                    font-family: -apple-system, sans-serif;
+                    background: linear-gradient(135deg, #1a1a2e, #16213e);
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0;
+                    color: #fff;
+                }
+                .card {
+                    background: rgba(255,255,255,0.1);
+                    padding: 2rem;
+                    border-radius: 20px;
+                    text-align: center;
+                    max-width: 350px;
+                }
+                h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+                p { color: #aaa; margin-bottom: 1.5rem; }
+                .btn {
+                    display: inline-block;
+                    background: #4285F4;
+                    color: #fff;
+                    padding: 1rem 2rem;
+                    border-radius: 50px;
+                    text-decoration: none;
+                    font-weight: bold;
+                    font-size: 1.1rem;
+                }
+                .btn:hover { background: #3367D6; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h1>🔗 連動 Google 帳號</h1>
+                <p>點擊下方按鈕授權存取<br>Google 相簿和文件</p>
+                <a href="${authUrl}" class="btn">開始連動</a>
+            </div>
+        </body>
+        </html>
+    `);
 });
 
 // Google OAuth 回調
@@ -727,9 +784,7 @@ async function handleLinkCommand(userId, code, replyToken) {
 }
 
 async function handleGoogleLink(userId, replyToken) {
-    const authUrl = googleApi.getAuthUrl(userId);
-    
-    if (!authUrl) {
+    if (!config.google.clientId) {
         await replyMessage(replyToken, {
             type: 'text',
             text: '❌ Google 連動功能尚未設定'
@@ -737,15 +792,17 @@ async function handleGoogleLink(userId, replyToken) {
         return;
     }
     
-    // 改用純文字訊息，避免 URL 太長的問題
+    // 用短連結指向中介頁面
+    const linkUrl = `${config.webUrl}/google-link?user=${userId}`;
+    
     await replyMessage(replyToken, {
         type: 'text',
         text: '🔗 連動 Google 帳號\n\n' +
               '連動後可以：\n' +
               '📷 照片自動存到 Google 相簿\n' +
               '📝 心得自動寫入 Google 文件\n\n' +
-              '👉 點擊下方連結開始連動：\n' +
-              authUrl
+              '👉 點擊連結開始：\n' +
+              linkUrl
     });
 }
 
