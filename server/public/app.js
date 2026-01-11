@@ -4,13 +4,13 @@
 
 // Firebase 配置（部署時替換）
 const firebaseConfig = {
-  apiKey: "AIzaSyCqcqt2tmTwbrdj75Vg6shm9Hubm96CVBg",
-  authDomain: "taiwan-explorer-260111.firebaseapp.com",
-  projectId: "taiwan-explorer-260111",
-  storageBucket: "taiwan-explorer-260111.firebasestorage.app",
-  messagingSenderId: "1069181589418",
-  appId: "1:1069181589418:web:3cfc13fee8a85175047dd3",
-  measurementId: "G-RKQ4RJNLJ5"
+    apiKey: "AIzaSyCqcqt2tmTwbrdj75Vg6shm9Hubm96CVBg",
+    authDomain: "taiwan-explorer-260111.firebaseapp.com",
+    projectId: "taiwan-explorer-260111",
+    storageBucket: "taiwan-explorer-260111.firebasestorage.app",
+    messagingSenderId: "1069181589418",
+    appId: "1:1069181589418:web:3cfc13fee8a85175047dd3",
+    measurementId: "G-RKQ4RJNLJ5"
 };
 
 // 景點資料（完整版）
@@ -1086,7 +1086,7 @@ function showLineConnectModal() {
     document.getElementById('link-code').value = code;
     
     // QR Code（實際部署時替換為真實的 LINE Bot 連結）
-    const lineUrl = `https://line.me/R/ti/p/@848mlviu`;
+    const lineUrl = `https://line.me/R/ti/p/@your-bot-id`;
     document.getElementById('line-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(lineUrl)}`;
     
     showModal('line-modal');
