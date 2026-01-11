@@ -192,11 +192,16 @@ app.get('/auth/google/callback', async (req, res) => {
         memoryStore.users[lineUserId].googleTokens = tokens;
         
         // 建立相簿和文件
-        const albumId = await googleApi.getOrCreateAlbum(tokens);
+        const albumResult = await googleApi.getOrCreateAlbum(tokens);
         const docId = await googleApi.getOrCreateDoc(tokens);
+        
+        // albumResult 是 { id, productUrl }
+        const albumId = albumResult.id || albumResult;
+        const albumUrl = albumResult.productUrl || null;
         
         // 保存到記憶體
         memoryStore.users[lineUserId].googleAlbumId = albumId;
+        memoryStore.users[lineUserId].googleAlbumUrl = albumUrl;
         memoryStore.users[lineUserId].googleDocId = docId;
         
         // 儲存到 Firebase（永久保存）
@@ -204,6 +209,7 @@ app.get('/auth/google/callback', async (req, res) => {
             await db.collection('lineUsers').doc(lineUserId).set({
                 googleTokens: tokens,
                 googleAlbumId: albumId,
+                googleAlbumUrl: albumUrl,
                 googleDocId: docId,
                 updatedAt: new Date().toISOString()
             }, { merge: true });
@@ -917,11 +923,27 @@ async function handleAlbumQuery(userId, replyToken) {
     }
     
     try {
-        const tokens = await googleApi.refreshTokens(userData.googleTokens.refresh_token);
-        const albumUrl = await googleApi.getAlbumUrl(tokens, userData.googleAlbumId);
+        // 優先使用保存的 URL
+        let albumUrl = userData.googleAlbumUrl;
         
-        // 確保 albumUrl 有值
-        const finalUrl = albumUrl || `https://photos.google.com/album/${userData.googleAlbumId}`;
+        // 如果沒有保存的 URL，嘗試從 API 取得
+        if (!albumUrl) {
+            const tokens = await googleApi.refreshTokens(userData.googleTokens.refresh_token);
+            albumUrl = await googleApi.getAlbumUrl(tokens, userData.googleAlbumId);
+            
+            // 保存以供下次使用
+            if (albumUrl) {
+                await updateUserData(userId, { googleAlbumUrl: albumUrl });
+            }
+        }
+        
+        if (!albumUrl) {
+            await replyMessage(replyToken, {
+                type: 'text',
+                text: '❌ 無法取得相簿連結\n\n請重新輸入「連動Google」'
+            });
+            return;
+        }
         
         await replyMessage(replyToken, {
             type: 'flex',
@@ -942,7 +964,7 @@ async function handleAlbumQuery(userId, replyToken) {
                     contents: [
                         {
                             type: 'button',
-                            action: { type: 'uri', label: '開啟相簿', uri: finalUrl },
+                            action: { type: 'uri', label: '開啟相簿', uri: albumUrl },
                             style: 'primary',
                             color: '#27ae60'
                         }

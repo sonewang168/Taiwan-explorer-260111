@@ -77,7 +77,7 @@ class GoogleIntegration {
         if (listData.albums) {
             const existing = listData.albums.find(a => a.title === albumTitle);
             if (existing) {
-                return existing.id;
+                return { id: existing.id, productUrl: existing.productUrl };
             }
         }
         
@@ -94,7 +94,7 @@ class GoogleIntegration {
         });
         const createData = await createResponse.json();
         
-        return createData.id;
+        return { id: createData.id, productUrl: createData.productUrl };
     }
 
     // 上傳照片到相簿
@@ -319,11 +319,11 @@ class GoogleIntegration {
             });
             const data = await response.json();
             
-            // 確保有回傳值
-            return data.productUrl || `https://photos.google.com/album/${albumId}`;
+            // 只回傳有效的 productUrl，不要用假的備用 URL
+            return data.productUrl || null;
         } catch (error) {
             console.error('getAlbumUrl 錯誤:', error);
-            return `https://photos.google.com/album/${albumId}`;
+            return null;
         }
     }
 }
