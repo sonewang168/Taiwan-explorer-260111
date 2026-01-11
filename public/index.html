@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>台灣探險圖鑑 | Taiwan Explorer</title>
     <meta name="description" content="收集全台灣景點，GPS打卡，成就解鎖，分享你的探險足跡">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#f4d03f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="探險圖鑑">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Cinzel:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -808,5 +817,53 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="app.js"></script>
+    
+    <!-- PWA 安裝 -->
+    <script>
+        // 註冊 Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('✅ Service Worker 已註冊'))
+                .catch(err => console.log('Service Worker 註冊失敗:', err));
+        }
+        
+        // iOS 安裝提示
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isStandalone = window.navigator.standalone === true;
+        
+        if (isIOS && !isStandalone && !localStorage.getItem('pwa-install-dismissed')) {
+            setTimeout(() => {
+                const banner = document.createElement('div');
+                banner.id = 'ios-install-banner';
+                banner.innerHTML = `
+                    <div style="
+                        position: fixed;
+                        bottom: 20px;
+                        left: 20px;
+                        right: 20px;
+                        background: linear-gradient(135deg, #f4d03f, #e67e22);
+                        color: #000;
+                        padding: 15px 20px;
+                        border-radius: 15px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                        z-index: 10000;
+                        font-size: 14px;
+                    ">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <strong>📲 安裝到主畫面</strong><br>
+                                <span style="font-size: 12px;">點 <span style="font-size: 16px;">⎙</span> 然後「加入主畫面」</span>
+                            </div>
+                            <button onclick="this.parentElement.parentElement.parentElement.remove(); localStorage.setItem('pwa-install-dismissed', '1');" 
+                                    style="background: #000; color: #fff; border: none; border-radius: 20px; padding: 8px 15px; font-weight: bold; cursor: pointer;">
+                                知道了
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(banner);
+            }, 3000);
+        }
+    </script>
 </body>
 </html>

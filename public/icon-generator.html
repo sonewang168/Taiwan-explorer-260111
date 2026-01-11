@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APP 圖示產生器</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        h1 { color: #f4d03f; margin-bottom: 2rem; }
+        canvas { border-radius: 20%; margin: 1rem; }
+        .btn {
+            background: linear-gradient(135deg, #f4d03f, #e67e22);
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        .sizes { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin: 2rem 0; }
+        .size-box { text-align: center; }
+        .size-label { font-size: 0.8rem; color: #888; }
+    </style>
+</head>
+<body>
+    <h1>📱 APP 圖示產生器</h1>
+    
+    <div class="sizes">
+        <div class="size-box">
+            <canvas id="icon512" width="512" height="512"></canvas>
+            <div class="size-label">512x512</div>
+            <button class="btn" onclick="download('icon512', 'icon-512.png')">下載</button>
+        </div>
+        <div class="size-box">
+            <canvas id="icon192" width="192" height="192"></canvas>
+            <div class="size-label">192x192</div>
+            <button class="btn" onclick="download('icon192', 'icon-192.png')">下載</button>
+        </div>
+    </div>
+    
+    <button class="btn" onclick="downloadAll()">📦 下載全部</button>
+
+    <script>
+        function drawIcon(canvas) {
+            const ctx = canvas.getContext('2d');
+            const s = canvas.width;
+            const scale = s / 512;
+            
+            // 背景漸層
+            const bgGrad = ctx.createLinearGradient(0, 0, s, s);
+            bgGrad.addColorStop(0, '#1a1a2e');
+            bgGrad.addColorStop(1, '#16213e');
+            
+            // 圓角矩形背景
+            ctx.beginPath();
+            const r = 100 * scale;
+            ctx.moveTo(r, 0);
+            ctx.lineTo(s - r, 0);
+            ctx.quadraticCurveTo(s, 0, s, r);
+            ctx.lineTo(s, s - r);
+            ctx.quadraticCurveTo(s, s, s - r, s);
+            ctx.lineTo(r, s);
+            ctx.quadraticCurveTo(0, s, 0, s - r);
+            ctx.lineTo(0, r);
+            ctx.quadraticCurveTo(0, 0, r, 0);
+            ctx.fillStyle = bgGrad;
+            ctx.fill();
+            
+            // 台灣島
+            const goldGrad = ctx.createLinearGradient(0, 0, s, s);
+            goldGrad.addColorStop(0, '#f4d03f');
+            goldGrad.addColorStop(1, '#e67e22');
+            
+            ctx.beginPath();
+            ctx.moveTo(256 * scale, 80 * scale);
+            ctx.bezierCurveTo(
+                200 * scale, 100 * scale,
+                180 * scale, 150 * scale,
+                175 * scale, 200 * scale
+            );
+            ctx.bezierCurveTo(
+                170 * scale, 250 * scale,
+                180 * scale, 300 * scale,
+                200 * scale, 350 * scale
+            );
+            ctx.bezierCurveTo(
+                220 * scale, 400 * scale,
+                250 * scale, 430 * scale,
+                256 * scale, 440 * scale
+            );
+            ctx.bezierCurveTo(
+                262 * scale, 430 * scale,
+                292 * scale, 400 * scale,
+                312 * scale, 350 * scale
+            );
+            ctx.bezierCurveTo(
+                332 * scale, 300 * scale,
+                342 * scale, 250 * scale,
+                337 * scale, 200 * scale
+            );
+            ctx.bezierCurveTo(
+                332 * scale, 150 * scale,
+                312 * scale, 100 * scale,
+                256 * scale, 80 * scale
+            );
+            ctx.fillStyle = goldGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3 * scale;
+            ctx.stroke();
+            
+            // 地標點
+            const spots = [
+                { x: 256, y: 160, r: 15, color: '#e74c3c' },
+                { x: 220, y: 220, r: 12, color: '#3498db' },
+                { x: 290, y: 240, r: 12, color: '#27ae60' },
+                { x: 256, y: 320, r: 15, color: '#9b59b6' }
+            ];
+            
+            spots.forEach(spot => {
+                ctx.beginPath();
+                ctx.arc(spot.x * scale, spot.y * scale, spot.r * scale, 0, Math.PI * 2);
+                ctx.fillStyle = spot.color;
+                ctx.fill();
+            });
+            
+            // 星星
+            ctx.font = `${40 * scale}px Arial`;
+            ctx.fillText('✨', 100 * scale, 120 * scale);
+            ctx.font = `${35 * scale}px Arial`;
+            ctx.fillText('⭐', 380 * scale, 150 * scale);
+            ctx.font = `${30 * scale}px Arial`;
+            ctx.fillText('🌟', 120 * scale, 420 * scale);
+            ctx.font = `${35 * scale}px Arial`;
+            ctx.fillText('✨', 370 * scale, 400 * scale);
+        }
+        
+        function download(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        function downloadAll() {
+            download('icon512', 'icon-512.png');
+            setTimeout(() => download('icon192', 'icon-192.png'), 500);
+        }
+        
+        // 初始化
+        drawIcon(document.getElementById('icon512'));
+        drawIcon(document.getElementById('icon192'));
+    </script>
+</body>
+</html>
