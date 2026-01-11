@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rich Menu 圖片產生器 - 冷光科技風格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a1a 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #00f5ff, #0080ff, #8000ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 245, 255, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 2rem;
+        }
+
+        .preview-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0, 245, 255, 0.2);
+            box-shadow: 0 0 40px rgba(0, 245, 255, 0.1);
+        }
+
+        .preview-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #00f5ff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .canvas-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            background: #000;
+            padding: 1rem;
+        }
+
+        #richMenuCanvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 0 60px rgba(0, 245, 255, 0.3);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 245, 255, 0.1);
+        }
+
+        .control-group h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: #00f5ff;
+        }
+
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .color-row label {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        .color-row input[type="color"] {
+            width: 50px;
+            height: 35px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .style-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid rgba(0, 245, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .style-select:focus {
+            outline: none;
+            border-color: #00f5ff;
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00f5ff, #0080ff);
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 245, 255, 0.5);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 50px rgba(0, 245, 255, 0.8);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #00f5ff;
+            border: 2px solid #00f5ff;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 245, 255, 0.1);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .specs {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .specs h3 {
+            color: #00f5ff;
+            margin-bottom: 1rem;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .spec-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .spec-label {
+            color: #888;
+        }
+
+        .spec-value {
+            color: #00f5ff;
+            font-weight: 600;
+        }
+
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .icon-input {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .icon-input input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid rgba(0, 245, 255, 0.3);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .icon-input span {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .loading {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .loading.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 245, 255, 0.2);
+            border-top-color: #00f5ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, #00f5ff, #0080ff);
+            color: #000;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.5s ease;
+            z-index: 1001;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Rich Menu 圖片產生器</h1>
+        <p class="subtitle">冷光科技風格 | LINE Bot 六宮格選單</p>
+
+        <div class="controls">
+            <div class="control-group">
+                <h3>🎨 配色主題</h3>
+                <select class="style-select" id="themeSelect" onchange="changeTheme()">
+                    <option value="cyan">❄️ 冰晶藍（Cyan）</option>
+                    <option value="purple">💜 電紫光（Purple）</option>
+                    <option value="green">💚 駭客綠（Matrix）</option>
+                    <option value="pink">💗 霓虹粉（Neon Pink）</option>
+                    <option value="gold">✨ 金屬金（Gold）</option>
+                    <option value="rainbow">🌈 彩虹光（Rainbow）</option>
+                </select>
+                
+                <div class="color-row">
+                    <label>主色調</label>
+                    <input type="color" id="primaryColor" value="#00f5ff" onchange="updateCanvas()">
+                </div>
+                <div class="color-row">
+                    <label>次要色</label>
+                    <input type="color" id="secondaryColor" value="#0080ff" onchange="updateCanvas()">
+                </div>
+                <div class="color-row">
+                    <label>背景色</label>
+                    <input type="color" id="bgColor" value="#0a0a1a" onchange="updateCanvas()">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>📝 按鈕圖示</h3>
+                <div class="icon-grid">
+                    <div class="icon-input">
+                        <input type="text" id="icon1" value="📍" maxlength="2" onchange="updateCanvas()">
+                        <span>打卡</span>
+                    </div>
+                    <div class="icon-input">
+                        <input type="text" id="icon2" value="📊" maxlength="2" onchange="updateCanvas()">
+                        <span>進度</span>
+                    </div>
+                    <div class="icon-input">
+                        <input type="text" id="icon3" value="📷" maxlength="2" onchange="updateCanvas()">
+                        <span>相簿</span>
+                    </div>
+                    <div class="icon-input">
+                        <input type="text" id="icon4" value="📝" maxlength="2" onchange="updateCanvas()">
+                        <span>紀錄</span>
+                    </div>
+                    <div class="icon-input">
+                        <input type="text" id="icon5" value="🔗" maxlength="2" onchange="updateCanvas()">
+                        <span>Google</span>
+                    </div>
+                    <div class="icon-input">
+                        <input type="text" id="icon6" value="🌐" maxlength="2" onchange="updateCanvas()">
+                        <span>網頁版</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>✨ 特效設定</h3>
+                <div class="color-row">
+                    <label>發光強度</label>
+                    <input type="range" id="glowIntensity" min="0" max="100" value="60" onchange="updateCanvas()">
+                </div>
+                <div class="color-row">
+                    <label>網格亮度</label>
+                    <input type="range" id="gridOpacity" min="0" max="100" value="30" onchange="updateCanvas()">
+                </div>
+                <div class="color-row">
+                    <label>粒子數量</label>
+                    <input type="range" id="particleCount" min="0" max="100" value="50" onchange="updateCanvas()">
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <div class="preview-title">
+                <span>👁️</span>
+                <span>預覽（實際尺寸 2500 x 1686）</span>
+            </div>
+            <div class="canvas-wrapper">
+                <canvas id="richMenuCanvas" width="2500" height="1686"></canvas>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="downloadImage()">
+                    <span>⬇️</span>
+                    <span>下載 PNG 圖片</span>
+                </button>
+                <button class="btn btn-secondary" onclick="downloadSVG()">
+                    <span>📐</span>
+                    <span>下載 SVG 向量圖</span>
+                </button>
+                <button class="btn btn-secondary" onclick="copyToClipboard()">
+                    <span>📋</span>
+                    <span>複製到剪貼簿</span>
+                </button>
+            </div>
+
+            <div class="specs">
+                <h3>📏 LINE Rich Menu 規格</h3>
+                <div class="specs-grid">
+                    <div class="spec-item">
+                        <span class="spec-label">尺寸</span>
+                        <span class="spec-value">2500 x 1686 px</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">格式</span>
+                        <span class="spec-value">PNG / JPEG</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">檔案大小</span>
+                        <span class="spec-value">< 1 MB</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">佈局</span>
+                        <span class="spec-value">6 格（2x3）</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">每格尺寸</span>
+                        <span class="spec-value">833 x 843 px</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">色彩模式</span>
+                        <span class="spec-value">RGB</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const canvas = document.getElementById('richMenuCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 主題配色
+        const themes = {
+            cyan: { primary: '#00f5ff', secondary: '#0080ff', bg: '#0a0a1a' },
+            purple: { primary: '#bf00ff', secondary: '#8000ff', bg: '#0a0a1a' },
+            green: { primary: '#00ff00', secondary: '#00aa00', bg: '#0a0a0a' },
+            pink: { primary: '#ff00ff', secondary: '#ff0080', bg: '#1a0a1a' },
+            gold: { primary: '#ffd700', secondary: '#ff8c00', bg: '#1a1a0a' },
+            rainbow: { primary: '#ff0000', secondary: '#00ff00', bg: '#0a0a1a' }
+        };
+
+        // 按鈕資料
+        const buttons = [
+            { label: '打卡', x: 416, y: 421 },
+            { label: '進度', x: 1250, y: 421 },
+            { label: '相簿', x: 2083, y: 421 },
+            { label: '紀錄', x: 416, y: 1264 },
+            { label: 'Google', x: 1250, y: 1264 },
+            { label: '網頁版', x: 2083, y: 1264 }
+        ];
+
+        // 改變主題
+        function changeTheme() {
+            const theme = themes[document.getElementById('themeSelect').value];
+            document.getElementById('primaryColor').value = theme.primary;
+            document.getElementById('secondaryColor').value = theme.secondary;
+            document.getElementById('bgColor').value = theme.bg;
+            updateCanvas();
+        }
+
+        // 繪製 Canvas
+        function updateCanvas() {
+            const primary = document.getElementById('primaryColor').value;
+            const secondary = document.getElementById('secondaryColor').value;
+            const bg = document.getElementById('bgColor').value;
+            const glowIntensity = document.getElementById('glowIntensity').value / 100;
+            const gridOpacity = document.getElementById('gridOpacity').value / 100;
+            const particleCount = document.getElementById('particleCount').value;
+
+            const icons = [
+                document.getElementById('icon1').value,
+                document.getElementById('icon2').value,
+                document.getElementById('icon3').value,
+                document.getElementById('icon4').value,
+                document.getElementById('icon5').value,
+                document.getElementById('icon6').value
+            ];
+
+            // 清空畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 背景漸層
+            const bgGradient = ctx.createRadialGradient(1250, 843, 0, 1250, 843, 1500);
+            bgGradient.addColorStop(0, adjustColor(bg, 20));
+            bgGradient.addColorStop(1, bg);
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 科技網格背景
+            drawTechGrid(primary, gridOpacity);
+
+            // 粒子效果
+            drawParticles(primary, particleCount);
+
+            // 六宮格分隔線（發光效果）
+            drawGlowingLines(primary, glowIntensity);
+
+            // 繪製按鈕
+            buttons.forEach((btn, i) => {
+                drawButton(btn.x, btn.y, icons[i], btn.label, primary, secondary, glowIntensity);
+            });
+
+            // 頂部標題
+            drawTitle(primary, glowIntensity);
+
+            // 邊框發光
+            drawBorderGlow(primary, glowIntensity);
+        }
+
+        // 繪製科技網格
+        function drawTechGrid(color, opacity) {
+            ctx.strokeStyle = hexToRgba(color, opacity * 0.3);
+            ctx.lineWidth = 1;
+
+            // 水平線
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // 垂直線
+            for (let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            // 對角線裝飾
+            ctx.strokeStyle = hexToRgba(color, opacity * 0.1);
+            for (let i = -canvas.height; i < canvas.width; i += 200) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i + canvas.height, canvas.height);
+                ctx.stroke();
+            }
+        }
+
+        // 繪製粒子
+        function drawParticles(color, count) {
+            for (let i = 0; i < count; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = Math.random() * 3 + 1;
+                const opacity = Math.random() * 0.5 + 0.2;
+
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fillStyle = hexToRgba(color, opacity);
+                ctx.fill();
+
+                // 發光效果
+                const glow = ctx.createRadialGradient(x, y, 0, x, y, size * 4);
+                glow.addColorStop(0, hexToRgba(color, opacity * 0.5));
+                glow.addColorStop(1, hexToRgba(color, 0));
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(x, y, size * 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // 繪製發光分隔線
+        function drawGlowingLines(color, intensity) {
+            // 發光效果
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 30 * intensity;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+
+            // 垂直分隔線
+            [833, 1667].forEach(x => {
+                // 多層發光
+                for (let i = 3; i > 0; i--) {
+                    ctx.strokeStyle = hexToRgba(color, intensity / i);
+                    ctx.lineWidth = i * 4;
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+            });
+
+            // 水平分隔線
+            for (let i = 3; i > 0; i--) {
+                ctx.strokeStyle = hexToRgba(color, intensity / i);
+                ctx.lineWidth = i * 4;
+                ctx.beginPath();
+                ctx.moveTo(0, 843);
+                ctx.lineTo(canvas.width, 843);
+                ctx.stroke();
+            }
+
+            ctx.shadowBlur = 0;
+        }
+
+        // 繪製按鈕
+        function drawButton(x, y, icon, label, primary, secondary, glowIntensity) {
+            // 六角形背景 (放大 1.5 倍)
+            drawHexagon(x, y - 80, 210, primary, glowIntensity);
+
+            // 圖示 (放大 1.5 倍: 140px → 210px)
+            ctx.font = '210px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(icon, x, y - 60);
+
+            // 標籤發光效果
+            ctx.shadowColor = primary;
+            ctx.shadowBlur = 20 * glowIntensity;
+
+            // 標籤文字 (放大 1.5 倍: 72px → 108px)
+            ctx.font = 'bold 108px "Noto Sans TC", Arial, sans-serif';
+            ctx.fillStyle = primary;
+            ctx.fillText(label, x, y + 180);
+
+            // 底部裝飾線 (放大 1.5 倍)
+            const gradient = ctx.createLinearGradient(x - 150, y + 240, x + 150, y + 240);
+            gradient.addColorStop(0, 'transparent');
+            gradient.addColorStop(0.5, primary);
+            gradient.addColorStop(1, 'transparent');
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(x - 180, y + 240);
+            ctx.lineTo(x + 180, y + 240);
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+        }
+
+        // 繪製六角形
+        function drawHexagon(x, y, size, color, glowIntensity) {
+            const angle = Math.PI / 3;
+
+            // 發光背景
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 50 * glowIntensity;
+
+            // 填充
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const px = x + size * Math.cos(angle * i - Math.PI / 6);
+                const py = y + size * Math.sin(angle * i - Math.PI / 6);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+
+            // 漸層填充
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+            gradient.addColorStop(0, hexToRgba(color, 0.3));
+            gradient.addColorStop(1, hexToRgba(color, 0.1));
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // 邊框 (加粗)
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+        }
+
+        // 繪製標題
+        function drawTitle(color, glowIntensity) {
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 15 * glowIntensity;
+
+            ctx.font = 'bold 48px "Noto Sans TC", Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = hexToRgba(color, 0.6);
+            ctx.fillText('🗺️ 台灣探險圖鑑', 1250, 55);
+
+            // 底部標語
+            ctx.font = '36px "Noto Sans TC", Arial, sans-serif';
+            ctx.fillStyle = hexToRgba(color, 0.4);
+            ctx.fillText('Taiwan Explorer', 1250, 1650);
+
+            ctx.shadowBlur = 0;
+        }
+
+        // 繪製邊框發光
+        function drawBorderGlow(color, intensity) {
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            gradient.addColorStop(0, 'transparent');
+            gradient.addColorStop(0.1, hexToRgba(color, intensity * 0.5));
+            gradient.addColorStop(0.5, hexToRgba(color, intensity));
+            gradient.addColorStop(0.9, hexToRgba(color, intensity * 0.5));
+            gradient.addColorStop(1, 'transparent');
+
+            // 頂部
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, 5);
+
+            // 底部
+            ctx.fillRect(0, canvas.height - 5, canvas.width, 5);
+
+            // 左右邊
+            const vGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            vGradient.addColorStop(0, 'transparent');
+            vGradient.addColorStop(0.1, hexToRgba(color, intensity * 0.5));
+            vGradient.addColorStop(0.5, hexToRgba(color, intensity));
+            vGradient.addColorStop(0.9, hexToRgba(color, intensity * 0.5));
+            vGradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = vGradient;
+            ctx.fillRect(0, 0, 5, canvas.height);
+            ctx.fillRect(canvas.width - 5, 0, 5, canvas.height);
+        }
+
+        // 顏色輔助函數
+        function hexToRgba(hex, alpha) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function adjustColor(hex, amount) {
+            const r = Math.min(255, parseInt(hex.slice(1, 3), 16) + amount);
+            const g = Math.min(255, parseInt(hex.slice(3, 5), 16) + amount);
+            const b = Math.min(255, parseInt(hex.slice(5, 7), 16) + amount);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // 下載 PNG
+        function downloadImage() {
+            showLoading(true);
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.download = 'rich-menu-' + Date.now() + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showLoading(false);
+                showToast('✅ PNG 圖片已下載！');
+            }, 500);
+        }
+
+        // 下載 SVG
+        function downloadSVG() {
+            const primary = document.getElementById('primaryColor').value;
+            const secondary = document.getElementById('secondaryColor').value;
+            const bg = document.getElementById('bgColor').value;
+
+            const icons = [
+                document.getElementById('icon1').value,
+                document.getElementById('icon2').value,
+                document.getElementById('icon3').value,
+                document.getElementById('icon4').value,
+                document.getElementById('icon5').value,
+                document.getElementById('icon6').value
+            ];
+
+            const svgContent = generateSVG(primary, secondary, bg, icons);
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const link = document.createElement('a');
+            link.download = 'rich-menu-' + Date.now() + '.svg';
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            showToast('✅ SVG 向量圖已下載！');
+        }
+
+        // 生成 SVG
+        function generateSVG(primary, secondary, bg, icons) {
+            const labels = ['打卡', '進度', '相簿', '紀錄', 'Google', '網頁版'];
+            const positions = [
+                { x: 416, y: 421 },
+                { x: 1250, y: 421 },
+                { x: 2083, y: 421 },
+                { x: 416, y: 1264 },
+                { x: 1250, y: 1264 },
+                { x: 2083, y: 1264 }
+            ];
+
+            let buttonsHTML = positions.map((pos, i) => `
+                <g transform="translate(${pos.x}, ${pos.y})">
+                    <polygon points="0,-140 121,-70 121,70 0,140 -121,70 -121,-70" 
+                             fill="${primary}22" stroke="${primary}" stroke-width="4" 
+                             filter="url(#glow)"/>
+                    <text y="-50" text-anchor="middle" font-size="140" fill="#ffffff">${icons[i]}</text>
+                    <text y="130" text-anchor="middle" font-family="Arial, sans-serif" 
+                          font-size="72" font-weight="bold" fill="${primary}" filter="url(#glow)">${labels[i]}</text>
+                </g>
+            `).join('');
+
+            return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2500" height="1686" viewBox="0 0 2500 1686">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:transparent"/>
+      <stop offset="50%" style="stop-color:${primary}"/>
+      <stop offset="100%" style="stop-color:transparent"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="2500" height="1686" fill="${bg}"/>
+  
+  <!-- 網格 -->
+  <g opacity="0.2">
+    ${Array.from({length: 34}, (_, i) => `<line x1="0" y1="${i*50}" x2="2500" y2="${i*50}" stroke="${primary}" stroke-width="1"/>`).join('')}
+    ${Array.from({length: 50}, (_, i) => `<line x1="${i*50}" y1="0" x2="${i*50}" y2="1686" stroke="${primary}" stroke-width="1"/>`).join('')}
+  </g>
+  
+  <!-- 分隔線 -->
+  <line x1="833" y1="0" x2="833" y2="1686" stroke="${primary}" stroke-width="4" filter="url(#glow)"/>
+  <line x1="1667" y1="0" x2="1667" y2="1686" stroke="${primary}" stroke-width="4" filter="url(#glow)"/>
+  <line x1="0" y1="843" x2="2500" y2="843" stroke="${primary}" stroke-width="4" filter="url(#glow)"/>
+  
+  <!-- 按鈕 -->
+  ${buttonsHTML}
+  
+  <!-- 標題 -->
+  <text x="1250" y="55" text-anchor="middle" font-family="Arial, sans-serif" 
+        font-size="48" fill="${primary}" opacity="0.6">🗺️ 台灣探險圖鑑</text>
+  <text x="1250" y="1650" text-anchor="middle" font-family="Arial, sans-serif" 
+        font-size="36" fill="${primary}" opacity="0.4">Taiwan Explorer</text>
+  
+  <!-- 邊框 -->
+  <rect x="0" y="0" width="2500" height="5" fill="url(#lineGrad)"/>
+  <rect x="0" y="1681" width="2500" height="5" fill="url(#lineGrad)"/>
+</svg>`;
+        }
+
+        // 複製到剪貼簿
+        async function copyToClipboard() {
+            try {
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ]);
+                showToast('✅ 已複製到剪貼簿！');
+            } catch (err) {
+                showToast('❌ 複製失敗，請直接下載');
+            }
+        }
+
+        // UI 輔助
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('show', show);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // 初始化
+        updateCanvas();
+    </script>
+</body>
+</html>

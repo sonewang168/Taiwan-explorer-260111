@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2500" height="1686" viewBox="0 0 2500 1686">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f4d03f"/>
+      <stop offset="100%" style="stop-color:#e67e22"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="2500" height="1686" fill="url(#bg)"/>
+  
+  <!-- 格線 -->
+  <line x1="833" y1="0" x2="833" y2="1686" stroke="#f4d03f" stroke-width="3" opacity="0.5"/>
+  <line x1="1667" y1="0" x2="1667" y2="1686" stroke="#f4d03f" stroke-width="3" opacity="0.5"/>
+  <line x1="0" y1="843" x2="2500" y2="843" stroke="#f4d03f" stroke-width="3" opacity="0.5"/>
+  
+  <!-- 第一列 -->
+  <!-- 打卡 -->
+  <g transform="translate(416, 421)">
+    <circle cx="0" cy="-60" r="120" fill="rgba(231, 76, 60, 0.2)" stroke="#e74c3c" stroke-width="3"/>
+    <text x="0" y="-40" text-anchor="middle" font-size="140" fill="#ffffff">📍</text>
+    <text x="0" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="url(#gold)" filter="url(#glow)">打卡</text>
+  </g>
+  
+  <!-- 進度 -->
+  <g transform="translate(1250, 421)">
+    <circle cx="0" cy="-60" r="120" fill="rgba(46, 204, 113, 0.2)" stroke="#2ecc71" stroke-width="3"/>
+    <text x="0" y="-40" text-anchor="middle" font-size="140" fill="#ffffff">📊</text>
+    <text x="0" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="url(#gold)" filter="url(#glow)">進度</text>
+  </g>
+  
+  <!-- 相簿 -->
+  <g transform="translate(2083, 421)">
+    <circle cx="0" cy="-60" r="120" fill="rgba(155, 89, 182, 0.2)" stroke="#9b59b6" stroke-width="3"/>
+    <text x="0" y="-40" text-anchor="middle" font-size="140" fill="#ffffff">📷</text>
+    <text x="0" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="url(#gold)" filter="url(#glow)">相簿</text>
+  </g>
+  
+  <!-- 第二列 -->
+  <!-- 紀錄 -->
+  <g transform="translate(416, 1264)">
+    <circle cx="0" cy="-60" r="120" fill="rgba(241, 196, 15, 0.2)" stroke="#f1c40f" stroke-width="3"/>
+    <text x="0" y="-40" text-anchor="middle" font-size="140" fill="#ffffff">📝</text>
+    <text x="0" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="url(#gold)" filter="url(#glow)">紀錄</text>
+  </g>
+  
+  <!-- Google -->
+  <g transform="translate(1250, 1264)">
+    <circle cx="0" cy="-60" r="120" fill="rgba(52, 152, 219, 0.2)" stroke="#3498db" stroke-width="3"/>
+    <text x="0" y="-40" text-anchor="middle" font-size="140" fill="#ffffff">🔗</text>
+    <text x="0" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="url(#gold)" filter="url(#glow)">Google</text>
+  </g>
+  
+  <!-- 網頁版 -->
+  <g transform="translate(2083, 1264)">
+    <circle cx="0" cy="-60" r="120" fill="rgba(230, 126, 34, 0.2)" stroke="#e67e22" stroke-width="3"/>
+    <text x="0" y="-40" text-anchor="middle" font-size="140" fill="#ffffff">🌐</text>
+    <text x="0" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="url(#gold)" filter="url(#glow)">網頁版</text>
+  </g>
+  
+  <!-- 頂部標題裝飾 -->
+  <text x="1250" y="80" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" fill="#f4d03f" opacity="0.6">🗺️ 台灣探險圖鑑</text>
+</svg>

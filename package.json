@@ -1,0 +1,30 @@
+{
+  "name": "taiwan-explorer",
+  "version": "2.0.0",
+  "description": "台灣探險圖鑑 - 景點收集打卡應用 (Google 相簿 + Docs 整合)",
+  "main": "server/index-v2.js",
+  "scripts": {
+    "start": "node server/index-v2.js",
+    "start:basic": "node server/index.js",
+    "dev": "nodemon server/index-v2.js",
+    "setup:richmenu": "node scripts/setup-rich-menu.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@line/bot-sdk": "^8.0.0",
+    "canvas": "^2.11.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "firebase-admin": "^11.11.0",
+    "googleapis": "^128.0.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["taiwan", "travel", "checkin", "line-bot", "google-photos", "google-docs"],
+  "author": "Sone Wang",
+  "license": "MIT"
+}

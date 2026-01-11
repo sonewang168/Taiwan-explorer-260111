@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rich Menu 冷光科技風格下載 | LINE Bot 六宮格選單</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: #050510;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 動態背景 */
+        .bg-animation {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(0, 245, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(128, 0, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(0, 128, 255, 0.1) 0%, transparent 70%);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #00f5ff 0%, #0080ff 50%, #8000ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 245, 255, 0.5)); }
+            50% { filter: drop-shadow(0 0 40px rgba(0, 245, 255, 0.8)); }
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #888;
+        }
+
+        .subtitle span {
+            color: #00f5ff;
+        }
+
+        /* 主題選擇 */
+        .theme-selector {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .theme-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid transparent;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .theme-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .theme-btn.active {
+            border-color: var(--theme-color, #00f5ff);
+            background: rgba(0, 245, 255, 0.1);
+            box-shadow: 0 0 30px var(--theme-color, rgba(0, 245, 255, 0.3));
+        }
+
+        .theme-btn[data-theme="cyan"] { --theme-color: #00f5ff; }
+        .theme-btn[data-theme="purple"] { --theme-color: #bf00ff; }
+        .theme-btn[data-theme="green"] { --theme-color: #00ff00; }
+        .theme-btn[data-theme="pink"] { --theme-color: #ff00ff; }
+        .theme-btn[data-theme="gold"] { --theme-color: #ffd700; }
+
+        /* 預覽區 */
+        .preview-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 245, 255, 0.2);
+            margin: 2rem 0;
+        }
+
+        .preview-label {
+            position: absolute;
+            top: -12px;
+            left: 30px;
+            background: #050510;
+            padding: 0 1rem;
+            color: #00f5ff;
+            font-size: 0.9rem;
+        }
+
+        .canvas-wrapper {
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 
+                0 0 60px rgba(0, 245, 255, 0.2),
+                inset 0 0 60px rgba(0, 0, 0, 0.5);
+        }
+
+        #mainCanvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* 按鈕組 */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+
+        .btn:hover::before {
+            transform: translateX(100%);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #00f5ff, #0080ff);
+            color: #000;
+            box-shadow: 0 0 40px rgba(0, 245, 255, 0.4);
+        }
+
+        .btn-download:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 0 60px rgba(0, 245, 255, 0.6);
+        }
+
+        .btn-alt {
+            background: transparent;
+            color: #00f5ff;
+            border: 2px solid #00f5ff;
+        }
+
+        .btn-alt:hover {
+            background: rgba(0, 245, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* 規格說明 */
+        .specs-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .specs-section h3 {
+            color: #00f5ff;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .spec-card {
+            background: rgba(0, 245, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 245, 255, 0.1);
+        }
+
+        .spec-card h4 {
+            color: #00f5ff;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .spec-card p {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* 使用說明 */
+        .instructions {
+            background: linear-gradient(135deg, rgba(0, 245, 255, 0.1), rgba(128, 0, 255, 0.1));
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .instructions h3 {
+            margin-bottom: 1.5rem;
+        }
+
+        .step-list {
+            list-style: none;
+            counter-reset: step;
+        }
+
+        .step-list li {
+            counter-increment: step;
+            padding: 1rem 0;
+            padding-left: 3.5rem;
+            position: relative;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .step-list li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 1rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, #00f5ff, #0080ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .step-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, #00f5ff, #0080ff);
+            color: #000;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 700;
+            opacity: 0;
+            transition: all 0.5s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* 響應式 */
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .container { padding: 1rem; }
+            .btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <div class="container">
+        <header>
+            <h1>⚡ RICH MENU 下載</h1>
+            <p class="subtitle">冷光科技風格 | <span>LINE Bot 六宮格選單</span></p>
+        </header>
+
+        <!-- 主題選擇 -->
+        <div class="theme-selector">
+            <button class="theme-btn active" data-theme="cyan" onclick="setTheme('cyan')">
+                ❄️ 冰晶藍
+            </button>
+            <button class="theme-btn" data-theme="purple" onclick="setTheme('purple')">
+                💜 電紫光
+            </button>
+            <button class="theme-btn" data-theme="green" onclick="setTheme('green')">
+                💚 駭客綠
+            </button>
+            <button class="theme-btn" data-theme="pink" onclick="setTheme('pink')">
+                💗 霓虹粉
+            </button>
+            <button class="theme-btn" data-theme="gold" onclick="setTheme('gold')">
+                ✨ 科技金
+            </button>
+        </div>
+
+        <!-- 預覽區 -->
+        <div class="preview-container">
+            <span class="preview-label">📐 預覽 (2500 × 1686)</span>
+            <div class="canvas-wrapper">
+                <canvas id="mainCanvas" width="2500" height="1686"></canvas>
+            </div>
+        </div>
+
+        <!-- 下載按鈕 -->
+        <div class="action-buttons">
+            <button class="btn btn-download" onclick="downloadPNG()">
+                <span style="font-size: 1.5rem;">⬇️</span>
+                <span>下載 PNG 圖片</span>
+            </button>
+            <button class="btn btn-alt" onclick="downloadJPG()">
+                <span>🖼️</span>
+                <span>下載 JPG（較小）</span>
+            </button>
+        </div>
+
+        <!-- 規格說明 -->
+        <div class="specs-section">
+            <h3>📏 LINE Rich Menu 規格</h3>
+            <div class="specs-grid">
+                <div class="spec-card">
+                    <h4>圖片尺寸</h4>
+                    <p>2500 × 1686 px</p>
+                </div>
+                <div class="spec-card">
+                    <h4>格式支援</h4>
+                    <p>PNG / JPEG</p>
+                </div>
+                <div class="spec-card">
+                    <h4>檔案限制</h4>
+                    <p>< 1 MB</p>
+                </div>
+                <div class="spec-card">
+                    <h4>按鈕數量</h4>
+                    <p>6 格 (2×3)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 使用說明 -->
+        <div class="instructions">
+            <h3>📖 使用說明</h3>
+            <ol class="step-list">
+                <li>選擇喜歡的配色主題，點擊下載 PNG 或 JPG 圖片</li>
+                <li>登入 <a href="https://manager.line.biz/" target="_blank" style="color: #00f5ff;">LINE Official Account Manager</a></li>
+                <li>前往「聊天室相關」→「圖文選單」→「建立」</li>
+                <li>選擇「大型 - 六格」範本，上傳下載的圖片</li>
+                <li>設定六個按鈕的動作（打卡、進度、相簿、紀錄、Google、網頁版）</li>
+                <li>儲存並啟用！</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 主題配色
+        const themes = {
+            cyan: { 
+                primary: '#00f5ff', 
+                secondary: '#0080ff', 
+                accent: '#00ffff',
+                bg: '#050510',
+                bgGlow: 'rgba(0, 245, 255, 0.1)'
+            },
+            purple: { 
+                primary: '#bf00ff', 
+                secondary: '#8000ff', 
+                accent: '#ff00ff',
+                bg: '#0a050f',
+                bgGlow: 'rgba(191, 0, 255, 0.1)'
+            },
+            green: { 
+                primary: '#00ff00', 
+                secondary: '#00cc00', 
+                accent: '#80ff80',
+                bg: '#050a05',
+                bgGlow: 'rgba(0, 255, 0, 0.1)'
+            },
+            pink: { 
+                primary: '#ff00ff', 
+                secondary: '#ff0080', 
+                accent: '#ff80ff',
+                bg: '#0f050a',
+                bgGlow: 'rgba(255, 0, 255, 0.1)'
+            },
+            gold: { 
+                primary: '#ffd700', 
+                secondary: '#ff8c00', 
+                accent: '#ffff00',
+                bg: '#0a0a05',
+                bgGlow: 'rgba(255, 215, 0, 0.1)'
+            }
+        };
+
+        let currentTheme = 'cyan';
+
+        // 按鈕配置
+        const buttons = [
+            { icon: '📍', label: '打卡', x: 416, y: 421 },
+            { icon: '📊', label: '進度', x: 1250, y: 421 },
+            { icon: '📷', label: '相簿', x: 2083, y: 421 },
+            { icon: '📝', label: '紀錄', x: 416, y: 1264 },
+            { icon: '🔗', label: 'Google', x: 1250, y: 1264 },
+            { icon: '🌐', label: '網頁版', x: 2083, y: 1264 }
+        ];
+
+        function setTheme(theme) {
+            currentTheme = theme;
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.theme === theme);
+            });
+            drawRichMenu();
+        }
+
+        function drawRichMenu() {
+            const t = themes[currentTheme];
+            
+            // 清空
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 背景
+            drawBackground(t);
+
+            // 科技網格
+            drawGrid(t);
+
+            // 裝飾粒子
+            drawParticles(t);
+
+            // 分隔線
+            drawDividers(t);
+
+            // 按鈕
+            buttons.forEach(btn => drawButton(btn, t));
+
+            // 標題
+            drawTitle(t);
+
+            // 邊框效果
+            drawBorder(t);
+
+            // 角落裝飾
+            drawCorners(t);
+        }
+
+        function drawBackground(t) {
+            // 主背景
+            ctx.fillStyle = t.bg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 放射漸層
+            const gradient = ctx.createRadialGradient(1250, 843, 0, 1250, 843, 1500);
+            gradient.addColorStop(0, t.bgGlow);
+            gradient.addColorStop(0.5, t.bgGlow.replace('0.1', '0.05'));
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 掃描線效果
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.01)';
+            for (let y = 0; y < canvas.height; y += 4) {
+                ctx.fillRect(0, y, canvas.width, 2);
+            }
+        }
+
+        function drawGrid(t) {
+            ctx.strokeStyle = t.primary + '15';
+            ctx.lineWidth = 1;
+
+            // 主網格
+            for (let x = 0; x <= canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // 細網格
+            ctx.strokeStyle = t.primary + '08';
+            for (let x = 25; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+        }
+
+        function drawParticles(t) {
+            for (let i = 0; i < 80; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = Math.random() * 3 + 1;
+                const opacity = Math.random() * 0.6 + 0.2;
+
+                // 粒子
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fillStyle = t.primary + Math.floor(opacity * 255).toString(16).padStart(2, '0');
+                ctx.fill();
+
+                // 發光
+                const glow = ctx.createRadialGradient(x, y, 0, x, y, size * 5);
+                glow.addColorStop(0, t.primary + '40');
+                glow.addColorStop(1, 'transparent');
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(x, y, size * 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawDividers(t) {
+            // 發光分隔線
+            const drawGlowLine = (x1, y1, x2, y2) => {
+                // 外發光
+                for (let i = 20; i > 0; i -= 2) {
+                    ctx.strokeStyle = t.primary + Math.floor((1 - i/20) * 30).toString(16).padStart(2, '0');
+                    ctx.lineWidth = i;
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+                }
+
+                // 主線
+                ctx.strokeStyle = t.primary;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+
+                // 高光
+                ctx.strokeStyle = '#ffffff80';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            };
+
+            drawGlowLine(833, 0, 833, canvas.height);
+            drawGlowLine(1667, 0, 1667, canvas.height);
+            drawGlowLine(0, 843, canvas.width, 843);
+        }
+
+        function drawButton(btn, t) {
+            const { icon, label, x, y } = btn;
+
+            // 六角形背景 (放大 1.5 倍: 150 → 225)
+            drawHexagon(x, y - 80, 225, t);
+
+            // 圓環裝飾 (放大 1.5 倍: 180 → 270)
+            ctx.strokeStyle = t.primary + '30';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(x, y - 80, 270, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // 圖示 (放大 1.5 倍: 150px → 225px)
+            ctx.font = '225px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(icon, x, y - 60);
+
+            // 標籤背景 (放大 1.5 倍)
+            ctx.font = 'bold 72px "Noto Sans TC", sans-serif';
+            const labelWidth = ctx.measureText(label).width + 80;
+            ctx.fillStyle = t.bg + 'cc';
+            roundRect(x - labelWidth/2, y + 140, labelWidth, 100, 50);
+            ctx.fill();
+
+            // 標籤邊框
+            ctx.strokeStyle = t.primary;
+            ctx.lineWidth = 3;
+            roundRect(x - labelWidth/2, y + 140, labelWidth, 100, 50);
+            ctx.stroke();
+
+            // 標籤文字 (放大 1.5 倍: 48px → 72px)
+            ctx.fillStyle = t.primary;
+            ctx.fillText(label, x, y + 195);
+
+            // 底部裝飾線 (放大 1.5 倍)
+            const lineGrad = ctx.createLinearGradient(x - 120, y + 270, x + 120, y + 270);
+            lineGrad.addColorStop(0, 'transparent');
+            lineGrad.addColorStop(0.5, t.primary);
+            lineGrad.addColorStop(1, 'transparent');
+            ctx.strokeStyle = lineGrad;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x - 120, y + 270);
+            ctx.lineTo(x + 120, y + 270);
+            ctx.stroke();
+        }
+
+        function drawHexagon(x, y, size, t) {
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                const px = x + size * Math.cos(angle);
+                const py = y + size * Math.sin(angle);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+
+            // 漸層填充
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+            gradient.addColorStop(0, t.primary + '30');
+            gradient.addColorStop(0.7, t.primary + '15');
+            gradient.addColorStop(1, t.primary + '05');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // 邊框發光 (加粗)
+            for (let i = 3; i > 0; i--) {
+                ctx.strokeStyle = t.primary + Math.floor(80 / i).toString(16).padStart(2, '0');
+                ctx.lineWidth = i * 4;
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = t.primary;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+
+        function drawTitle(t) {
+            // 頂部標題 (放大)
+            ctx.font = 'bold 64px "Noto Sans TC", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = t.primary + '90';
+            ctx.fillText('🗺️ 台灣探險圖鑑', 1250, 70);
+
+            // 底部標語 (放大)
+            ctx.font = '700 52px "Orbitron", sans-serif';
+            ctx.fillStyle = t.primary + '60';
+            ctx.fillText('TAIWAN EXPLORER', 1250, 1640);
+        }
+
+        function drawBorder(t) {
+            // 頂部
+            let grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            grad.addColorStop(0, 'transparent');
+            grad.addColorStop(0.3, t.primary + '80');
+            grad.addColorStop(0.5, t.primary);
+            grad.addColorStop(0.7, t.primary + '80');
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, 4);
+
+            // 底部
+            ctx.fillRect(0, canvas.height - 4, canvas.width, 4);
+
+            // 側邊
+            grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            grad.addColorStop(0, 'transparent');
+            grad.addColorStop(0.3, t.primary + '60');
+            grad.addColorStop(0.5, t.primary + '80');
+            grad.addColorStop(0.7, t.primary + '60');
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 4, canvas.height);
+            ctx.fillRect(canvas.width - 4, 0, 4, canvas.height);
+        }
+
+        function drawCorners(t) {
+            const size = 60;
+            const corners = [
+                [0, 0, 1, 1],
+                [canvas.width, 0, -1, 1],
+                [0, canvas.height, 1, -1],
+                [canvas.width, canvas.height, -1, -1]
+            ];
+
+            ctx.strokeStyle = t.primary;
+            ctx.lineWidth = 3;
+
+            corners.forEach(([x, y, dx, dy]) => {
+                ctx.beginPath();
+                ctx.moveTo(x, y + dy * size);
+                ctx.lineTo(x, y);
+                ctx.lineTo(x + dx * size, y);
+                ctx.stroke();
+            });
+        }
+
+        function roundRect(x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function downloadPNG() {
+            const link = document.createElement('a');
+            link.download = `rich-menu-${currentTheme}-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showToast('✅ PNG 已下載！');
+        }
+
+        function downloadJPG() {
+            const link = document.createElement('a');
+            link.download = `rich-menu-${currentTheme}-${Date.now()}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+            showToast('✅ JPG 已下載！');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // 初始化
+        drawRichMenu();
+    </script>
+</body>
+</html>
