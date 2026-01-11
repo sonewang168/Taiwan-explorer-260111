@@ -861,29 +861,35 @@ async function handleLinkCommand(userId, code, replyToken) {
     }
     
     try {
-        if (db) {
-            const snapshot = await db.collection('users')
-                .where('linkCode', '==', code.toUpperCase())
-                .limit(1)
-                .get();
-            
-            if (snapshot.empty) {
-                await replyMessage(replyToken, { type: 'text', text: '❌ 連動碼無效' });
-                return;
-            }
-            
-            const userDoc = snapshot.docs[0];
-            await db.collection('lineLinks').doc(userId).set({
-                firebaseUserId: userDoc.id,
-                linkedAt: admin.firestore.FieldValue.serverTimestamp()
-            });
-            await userDoc.ref.update({ lineUserId: userId });
-            
+        if (!db) {
             await replyMessage(replyToken, {
                 type: 'text',
-                text: '✅ 帳號連動成功！\n\n網頁和 LINE 的資料會自動同步'
+                text: '⚠️ 資料庫尚未設定\n\n目前 LINE Bot 可獨立使用，無需連動'
             });
+            return;
         }
+        
+        const snapshot = await db.collection('users')
+            .where('linkCode', '==', code.toUpperCase())
+            .limit(1)
+            .get();
+        
+        if (snapshot.empty) {
+            await replyMessage(replyToken, { type: 'text', text: '❌ 連動碼無效' });
+            return;
+        }
+        
+        const userDoc = snapshot.docs[0];
+        await db.collection('lineLinks').doc(userId).set({
+            firebaseUserId: userDoc.id,
+            linkedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        await userDoc.ref.update({ lineUserId: userId });
+        
+        await replyMessage(replyToken, {
+            type: 'text',
+            text: '✅ 帳號連動成功！\n\n網頁和 LINE 的資料會自動同步'
+        });
     } catch (error) {
         console.error('連動失敗:', error);
         await replyMessage(replyToken, { type: 'text', text: '❌ 連動失敗，請稍後再試' });
