@@ -1095,6 +1095,14 @@ async function signInWithGoogle() {
         return;
     }
     
+    // 偵測 LINE 內建瀏覽器
+    const isLineApp = /Line/i.test(navigator.userAgent);
+    if (isLineApp) {
+        closeModal('auth-modal');
+        showLineBlockedModal();
+        return;
+    }
+    
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
         await auth.signInWithPopup(provider);
@@ -1104,6 +1112,56 @@ async function signInWithGoogle() {
         console.error('Google auth error:', error);
         showNotification(`❌ ${error.message}`);
     }
+}
+
+// 顯示 LINE 瀏覽器被封鎖提示
+function showLineBlockedModal() {
+    const url = window.location.href;
+    
+    // 創建提示 modal
+    const modal = document.createElement('div');
+    modal.id = 'line-blocked-modal';
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content" style="text-align:center;">
+            <div class="modal-header">
+                <h3>⚠️ 請用外部瀏覽器開啟</h3>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:15px;">Google 不支援在 LINE 內建瀏覽器登入</p>
+                <p style="margin-bottom:20px;color:#666;">請複製連結，用 Safari 或 Chrome 開啟</p>
+                <input type="text" value="${url}" readonly 
+                    style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:15px;font-size:14px;">
+                <button onclick="copyUrlAndClose()" class="btn btn-primary" style="width:100%;margin-bottom:10px;">
+                    📋 複製連結
+                </button>
+                <button onclick="closeLineBlockedModal()" class="btn btn-secondary" style="width:100%;">
+                    取消
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function copyUrlAndClose() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        showNotification('✅ 已複製連結，請用 Safari/Chrome 開啟');
+        closeLineBlockedModal();
+    }).catch(() => {
+        // 備用方案
+        const input = document.querySelector('#line-blocked-modal input');
+        input.select();
+        document.execCommand('copy');
+        showNotification('✅ 已複製連結，請用 Safari/Chrome 開啟');
+        closeLineBlockedModal();
+    });
+}
+
+function closeLineBlockedModal() {
+    const modal = document.getElementById('line-blocked-modal');
+    if (modal) modal.remove();
 }
 
 function showUserMenu() {
