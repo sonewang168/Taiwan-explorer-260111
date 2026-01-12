@@ -38,15 +38,21 @@ const config = {
 // Firebase
 let db = null;
 if (config.firebase.projectId && config.firebase.privateKey) {
-    admin.initializeApp({
-        credential: admin.credential.cert({
-            projectId: config.firebase.projectId,
-            clientEmail: config.firebase.clientEmail,
-            privateKey: config.firebase.privateKey
-        })
-    });
-    db = admin.firestore();
-    console.log('✅ Firebase 已連線');
+    try {
+        admin.initializeApp({
+            credential: admin.credential.cert({
+                projectId: config.firebase.projectId,
+                clientEmail: config.firebase.clientEmail,
+                privateKey: config.firebase.privateKey
+            })
+        });
+        db = admin.firestore();
+        console.log('✅ Firebase 已連線，專案:', config.firebase.projectId);
+    } catch (error) {
+        console.error('❌ Firebase 初始化失敗:', error.message);
+    }
+} else {
+    console.log('⚠️ Firebase 未設定，projectId:', config.firebase.projectId ? '有' : '無', ', privateKey:', config.firebase.privateKey ? '有' : '無');
 }
 
 // LINE Bot
@@ -869,17 +875,31 @@ async function handleLinkCommand(userId, code, replyToken) {
             return;
         }
         
+        const searchCode = code.toUpperCase();
+        console.log('搜尋連動碼:', searchCode);
+        
         const snapshot = await db.collection('users')
-            .where('linkCode', '==', code.toUpperCase())
+            .where('linkCode', '==', searchCode)
             .limit(1)
             .get();
         
+        console.log('查詢結果數量:', snapshot.size);
+        
         if (snapshot.empty) {
-            await replyMessage(replyToken, { type: 'text', text: '❌ 連動碼無效' });
+            // 嘗試列出所有用戶的 linkCode 來 debug
+            const allUsers = await db.collection('users').get();
+            console.log('所有用戶數量:', allUsers.size);
+            allUsers.forEach(doc => {
+                console.log('用戶 linkCode:', doc.data().linkCode);
+            });
+            
+            await replyMessage(replyToken, { type: 'text', text: '❌ 連動碼無效\n\n請確認連動碼正確' });
             return;
         }
         
         const userDoc = snapshot.docs[0];
+        console.log('找到用戶:', userDoc.id);
+        
         await db.collection('lineLinks').doc(userId).set({
             firebaseUserId: userDoc.id,
             linkedAt: admin.firestore.FieldValue.serverTimestamp()
